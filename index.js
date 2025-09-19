@@ -1,7 +1,9 @@
-const express=require('express')
-const mongoose=require('mongoose')
-const cors=require('cors')
-const app = express()
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const FoodModel = require('./models/food'); // Capitalized model name
+
+const app = express();
 const allowOrigins = ["http://localhost:3000", "https://Mervin3012.github.io"];
 
 app.use(cors({
@@ -9,94 +11,74 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
 
-
-app.use(express.json())
-
-const FoodModel=require("./models/food")
+app.use(express.json());
 
 mongoose.connect("mongodb+srv://admin:admin@cluster0.nzsr7.mongodb.net/food")
-.then(() => console.log('Connected to MongoDB...'))
-.catch(err => console.error('Could not connect to MongoDB...'));
+  .then(() => console.log('Connected to MongoDB...'))
+  .catch(err => console.error('Could not connect to MongoDB...', err));
 
-//insert 
-app.post("/insert",async(req,res)=>{
-    const {foodName,description}=req.body;
-    const food=new FoodModel({foodName,description})
-    try
-    {
-        await food.save()
-        res.send("Data Inserted..")
-    }
-    catch(err)
-    {
-        res.send("Error Occured")
-    }
-})
+// Insert a new food item
+app.post("/insert", async (req, res) => {
+  const { foodName, description } = req.body;
+  const food = new FoodModel({ foodName, description });
 
-//Read the data
-app.get("/read",async(req,res)=>{
-    try{
-        const food=await FoodModel.find();
-        res.send(food);
-    }
-    catch(err)
-    {
-         res.send("Error Occured")
-    }
-})
+  try {
+    await food.save();
+    res.send("Data Inserted..");
+  } catch (err) {
+    res.status(500).send("Error Occurred");
+  }
+});
 
-//update data
+// Read all food items
+app.get("/read", async (req, res) => {
+  try {
+    const foods = await FoodModel.find();
+    res.send(foods);
+  } catch (err) {
+    res.status(500).send("Error Occurred");
+  }
+});
 
-app.put("/update",async(req,res)=>{
-    const {newFoodName,id}=req.body;
-    try
-    {
-        const updateFood=await FoodModel.findById(id);
-        if(!updateFood)
-        {
-              return res.status(404).send("Data not updated")
-        }
-        updateFood.foodName=newFoodName;
-        await updateFood.save()
-        res.send("Data Updated SuccessFully");
+// Update a food item by ID
+app.put("/update", async (req, res) => {
+  const { newFoodName, id } = req.body;
+
+  try {
+    const updateFood = await FoodModel.findById(id);
+    if (!updateFood) {
+      return res.status(404).send("Data not updated");
     }
+    updateFood.foodName = newFoodName;
+    await updateFood.save();
+    res.send("Data Updated Successfully");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error Occurred");
+  }
+});
 
-    catch(err)
-    {
-          console.log(err)
-    }
-})
-//Deleting the data
-
+// Delete a food item by ID
 app.delete("/delete/:id", async (req, res) => {
-    const { id } = req.params; // Using object destructuring for better readability
-  
-    try {
-      // Attempt to find and remove the food item by its ID
-      const result = await FoodModel.findByIdAndDelete(id);
-  
-      if (!result) {
-        // Respond with a 404 status if the item is not found
-        return res.status(404).json({ message: "Food item not found" });
-      }
-  
-      // Respond with a success message if deletion is successful
-      res.status(200).json({ message: "Food item deleted successfully" });
-    } catch (err) {
-      console.error("Error during deletion:", err); // Log the error for debugging
-  
-      // Respond with a 500 status for server errors
-      res.status(500).json({ message: "Error deleting food item" });
-    }
-  });
+  const { id } = req.params;
 
- // ... all your existing code ...
+  try {
+    const result = await FoodModel.findByIdAndDelete(id);
+    if (!result) {
+      return res.status(404).json({ message: "Food item not found" });
+    }
+    res.status(200).json({ message: "Food item deleted successfully" });
+  } catch (err) {
+    console.error("Error during deletion:", err);
+    res.status(500).json({ message: "Error deleting food item" });
+  }
+});
 
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// ✅ Use dynamic port for Render compatibility
+// Use dynamic port for deployment compatibility
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
