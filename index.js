@@ -4,12 +4,21 @@ const cors = require('cors');
 const FoodModel = require('./models/Food');
 
 const app = express();
-const allowOrigins = ["http://localhost:3000", "https://Mervin3012.github.io"];
+const allowedOrigins = ["http://localhost:3000", "https://mervin3012.github.io"];
 
 app.use(cors({
-  origin: allowOrigins,
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like curl or Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin.toLowerCase()) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
 }));
+
 
 app.use(express.json());
 
