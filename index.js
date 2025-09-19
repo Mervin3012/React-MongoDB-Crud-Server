@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const FoodModel = require('./models/food'); // Capitalized model name
+const FoodModel = require('./models/Food');
 
 const app = express();
 const allowOrigins = ["http://localhost:3000", "https://Mervin3012.github.io"];
